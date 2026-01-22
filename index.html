@@ -855,9 +855,20 @@
         let studentName = '';
         let surveyDate = '';
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
-        });
+        // Robust auto-date initialization with multiple fallbacks
+        function setTodayDate() {
+            var dateField = document.getElementById('testDate');
+            if (dateField && !dateField.value) {
+                dateField.value = new Date().toISOString().split('T')[0];
+            }
+        }
+        setTodayDate();
+        document.addEventListener('DOMContentLoaded', setTodayDate);
+        window.addEventListener('load', setTodayDate);
+        requestAnimationFrame(setTodayDate);
+        setTimeout(setTodayDate, 0);
+        setTimeout(setTodayDate, 100);
+        setTimeout(setTodayDate, 500);
 
         function startAssessment() {
             studentName = document.getElementById('studentName').value.trim();
@@ -1176,135 +1187,315 @@
         }
 
         function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const { scores, totalScore, profile, strongestDim, weakestDim } = window.changeResults;
-            const maxDimensionScore = 50;
-            const maxTotalScore = 200;
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF();
+            var scores = window.changeResults.scores;
+            var totalScore = window.changeResults.totalScore;
+            var profile = window.changeResults.profile;
+            var strongestDim = window.changeResults.strongestDim;
+            var weakestDim = window.changeResults.weakestDim;
+            var maxDimensionScore = 50;
+            var maxTotalScore = 200;
 
-            const chapmanBlue = [0, 32, 91];
-            const chapmanGold = [196, 160, 0];
-            const textDark = [26, 26, 46];
-            const textMuted = [100, 100, 110];
+            // Colors
+            var chapmanBlue = [0, 32, 91];
+            var chapmanGold = [196, 160, 0];
+            var textDark = [26, 26, 46];
+            var textMuted = [100, 100, 110];
+            var greenColor = [46, 125, 50];
+            var redColor = [198, 40, 40];
+            var blueColor = [21, 101, 192];
+            var orangeColor = [230, 81, 0];
+            var purpleColor = [123, 31, 162];
 
-            // Header
-            doc.setFillColor(...chapmanBlue);
-            doc.rect(0, 0, 210, 45, 'F');
+            // Tracker code generation
+            var dimAbbrev = { cognitive: 'Co', emotional: 'Em', proactive: 'Pr', learning: 'Le' };
+            var profileAbbrev = profile.name.includes('Champion') ? 'Ch' : profile.name.includes('Ready') ? 'Re' : profile.name.includes('Capable') ? 'Ca' : 'Rs';
+            var trackerCode = 'CRA-' + dimAbbrev[strongestDim] + '-' + profileAbbrev + totalScore;
+
+            // Helper function
+            function addWrappedText(text, x, startY, maxWidth, lineHeight) {
+                var lines = doc.splitTextToSize(text, maxWidth);
+                var currentY = startY;
+                for (var i = 0; i < lines.length; i++) {
+                    if (currentY > 275) { doc.addPage(); currentY = 20; }
+                    doc.text(lines[i], x, currentY);
+                    currentY += lineHeight;
+                }
+                return currentY;
+            }
+
+            // ===== PAGE 1 =====
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.rect(0, 0, 210, 42, 'F');
             doc.setFontSize(10);
             doc.setTextColor(255, 255, 255);
             doc.text('CHAPMAN UNIVERSITY', 105, 12, { align: 'center' });
             doc.setFontSize(9);
-            doc.setTextColor(...chapmanGold);
+            doc.setTextColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
             doc.text('Argyros College of Business and Economics', 105, 18, { align: 'center' });
-            doc.setFontSize(18);
+            doc.setFontSize(15);
             doc.setTextColor(255, 255, 255);
-            doc.text('Change Readiness Assessment', 105, 30, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text('Official Results Report', 105, 38, { align: 'center' });
-            doc.setFillColor(...chapmanGold);
-            doc.rect(0, 45, 210, 2, 'F');
+            doc.text('Change Readiness Assessment', 105, 28, { align: 'center' });
+            doc.setFontSize(9);
+            doc.text("Based on Rogers' Diffusion of Innovations", 105, 36, { align: 'center' });
+            doc.setFillColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
+            doc.rect(0, 42, 210, 2, 'F');
 
-            let y = 55;
-            doc.setFontSize(11);
-            doc.setTextColor(...textDark);
-            doc.text(`Student: ${studentName}`, 20, y);
-            doc.text(`Date: ${new Date(surveyDate).toLocaleDateString()}`, 120, y);
+            var y = 52;
+            doc.setFontSize(10);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.text('Student: ' + studentName, 20, y);
+            doc.text('Date: ' + new Date(surveyDate).toLocaleDateString(), 140, y);
             y += 10;
 
-            // Overall Score
-            doc.setFontSize(9);
-            doc.setTextColor(...textMuted);
-            doc.text(`Overall Score: ${totalScore} of ${maxTotalScore} (${Math.round((totalScore/maxTotalScore)*100)}%)`, 20, y);
-            y += 12;
-
-            // Profile
-            doc.setFillColor(...chapmanBlue);
-            doc.roundedRect(20, y, 170, 15, 3, 3, 'F');
-            doc.setFontSize(12);
+            // Profile Banner
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 18, 2, 2, 'F');
+            doc.setFontSize(14);
             doc.setTextColor(255, 255, 255);
-            doc.text(`${profile.icon} ${profile.name.toUpperCase()}`, 105, y + 10, { align: 'center' });
-            y += 22;
+            doc.text(profile.name.toUpperCase() + ': ' + totalScore + '/200', 105, y + 12, { align: 'center' });
+            y += 24;
 
             doc.setFontSize(10);
-            doc.setTextColor(...chapmanGold);
-            doc.text(`${profile.subtitle}`, 105, y, { align: 'center' });
-            y += 12;
-
-            // Dimension Scores
-            doc.setFontSize(9);
-            doc.setTextColor(...textMuted);
-            doc.text(`Cognitive: ${scores.cognitive} | Emotional: ${scores.emotional} | Proactive: ${scores.proactive} | Learning: ${scores.learning}`, 20, y);
-            y += 10;
-
-            // Description
-            doc.setFontSize(9);
-            doc.setTextColor(...textDark);
-            const descLines = doc.splitTextToSize(profile.description, 170);
-            descLines.forEach(line => { doc.text(line, 20, y); y += 5; });
+            doc.setTextColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
+            doc.text(profile.subtitle, 105, y, { align: 'center' });
             y += 8;
 
-            // Strengths
-            doc.setFontSize(11);
-            doc.setTextColor(...chapmanBlue);
-            doc.text('Strengths in Change', 20, y);
-            y += 7;
-            doc.setFontSize(9);
-            doc.setTextColor(...textDark);
-            profile.strengths.slice(0, 4).forEach(s => {
-                if (y > 270) { doc.addPage(); y = 20; }
-                doc.text(`• ${s}`, 25, y); y += 5;
-            });
-            y += 8;
+            // Score Box
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(20, y, 170, 22, 2, 2, 'F');
+            doc.setFontSize(8);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('DIMENSION SCORES (10 questions each, max 50)', 25, y + 6);
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.text('Cognitive Flexibility: ' + scores.cognitive, 25, y + 12);
+            doc.text('Emotional Resilience: ' + scores.emotional, 100, y + 12);
+            doc.text('Proactive Orientation: ' + scores.proactive, 25, y + 18);
+            doc.text('Learning Agility: ' + scores.learning, 100, y + 18);
+            var pct = Math.round((totalScore / maxTotalScore) * 100);
+            doc.text('Overall: ' + pct + '%', 160, y + 15);
+            y += 28;
 
-            // Growth Areas
-            if (y > 220) { doc.addPage(); y = 20; }
-            doc.setFontSize(11);
-            doc.setTextColor(...chapmanBlue);
-            doc.text('Areas to Develop', 20, y);
-            y += 7;
-            doc.setFontSize(9);
-            doc.setTextColor(...textDark);
-            profile.challenges.slice(0, 4).forEach(c => {
-                if (y > 270) { doc.addPage(); y = 20; }
-                doc.text(`• ${c}`, 25, y); y += 5;
-            });
-            y += 10;
+            // Tracker Code Box
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
+            doc.setFontSize(8);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Tracker: ' + trackerCode + '  |  Strength: ' + dimensionData[strongestDim].name + '  |  Growth: ' + dimensionData[weakestDim].name, 105, y + 7, { align: 'center' });
+            y += 16;
 
-            // Reflection
-            if (y > 200) { doc.addPage(); y = 20; }
-            doc.setFillColor(...chapmanBlue);
+            // Profile Description
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            y = addWrappedText(profile.description, 20, y, 170, 4);
+            y += 5;
+
+            // Strengths in Change
+            doc.setFontSize(10);
+            doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.text('STRENGTHS IN CHANGE', 20, y);
+            y += 5;
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            for (var i = 0; i < Math.min(4, profile.strengths.length); i++) {
+                doc.text('- ' + profile.strengths[i], 25, y);
+                y += 4;
+            }
+            y += 3;
+
+            // Challenges
+            doc.setFontSize(10);
+            doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.text('AREAS TO DEVELOP', 20, y);
+            y += 5;
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            for (var i = 0; i < Math.min(4, profile.challenges.length); i++) {
+                doc.text('- ' + profile.challenges[i], 25, y);
+                y += 4;
+            }
+            y += 3;
+
+            // Strongest Dimension
+            doc.setFontSize(10);
+            doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.text('STRONGEST: ' + dimensionData[strongestDim].name + ' (' + scores[strongestDim] + '/50)', 20, y);
+            y += 5;
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            y = addWrappedText(dimensionData[strongestDim].description, 20, y, 170, 4);
+
+            // ===== PAGE 2: SWOT and All Dimensions =====
+            doc.addPage();
+            y = 20;
+
+            // SWOT Header
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text('SWOT ANALYSIS - Change Readiness Profile', 105, y + 7, { align: 'center' });
+            y += 18;
+
+            // SWOT Grid
+            var boxW = 82;
+            var boxH = 26;
+
+            // Strength
+            doc.setFillColor(232, 245, 233);
+            doc.roundedRect(20, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.setLineWidth(0.5);
+            doc.line(20, y, 20, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.text('STRENGTH', 25, y + 7);
+            doc.setFontSize(7);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            var sText = profile.strengths[0];
+            var sLines = doc.splitTextToSize(sText, boxW - 10);
+            for (var i = 0; i < Math.min(sLines.length, 3); i++) {
+                doc.text(sLines[i], 25, y + 12 + (i * 4));
+            }
+
+            // Weakness
+            doc.setFillColor(255, 235, 238);
+            doc.roundedRect(108, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(redColor[0], redColor[1], redColor[2]);
+            doc.line(108, y, 108, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(redColor[0], redColor[1], redColor[2]);
+            doc.text('WEAKNESS', 113, y + 7);
+            doc.setFontSize(7);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            var wText = profile.challenges[0];
+            var wLines = doc.splitTextToSize(wText, boxW - 10);
+            for (var i = 0; i < Math.min(wLines.length, 3); i++) {
+                doc.text(wLines[i], 113, y + 12 + (i * 4));
+            }
+
+            y += boxH + 5;
+
+            // Opportunity
+            doc.setFillColor(227, 242, 253);
+            doc.roundedRect(20, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.line(20, y, 20, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.text('OPPORTUNITY', 25, y + 7);
+            doc.setFontSize(7);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            var oText = 'Develop ' + dimensionData[weakestDim].name.toLowerCase() + ' to increase overall adaptability';
+            var oLines = doc.splitTextToSize(oText, boxW - 10);
+            for (var i = 0; i < Math.min(oLines.length, 3); i++) {
+                doc.text(oLines[i], 25, y + 12 + (i * 4));
+            }
+
+            // Threat
+            doc.setFillColor(255, 243, 224);
+            doc.roundedRect(108, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.line(108, y, 108, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.text('THREAT', 113, y + 7);
+            doc.setFontSize(7);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            var tText = 'Rapid organizational change may outpace current readiness level';
+            var tLines = doc.splitTextToSize(tText, boxW - 10);
+            for (var i = 0; i < Math.min(tLines.length, 3); i++) {
+                doc.text(tLines[i], 113, y + 12 + (i * 4));
+            }
+
+            y += boxH + 12;
+
+            // Change Readiness Framework
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(20, y, 170, 20, 2, 2, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('CHANGE READINESS FRAMEWORK', 105, y + 6, { align: 'center' });
+            doc.setFontSize(7);
+            doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+            doc.text('Cognitive (Think) + Emotional (Feel) + Proactive (Act) + Learning (Grow)', 105, y + 12, { align: 'center' });
+            doc.text('Champion > Ready > Capable > Resistant', 105, y + 17, { align: 'center' });
+            y += 26;
+
+            // All Four Dimensions
+            doc.setFontSize(10);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('THE FOUR CHANGE READINESS DIMENSIONS', 20, y);
+            y += 7;
+
+            var dims = ['cognitive', 'emotional', 'proactive', 'learning'];
+            var dimColors = {
+                cognitive: blueColor,
+                emotional: purpleColor,
+                proactive: greenColor,
+                learning: orangeColor
+            };
+
+            for (var d = 0; d < dims.length; d++) {
+                var dim = dims[d];
+                var dimColor = dimColors[dim];
+                var isYours = (dim === strongestDim);
+                
+                if (y > 245) { doc.addPage(); y = 20; }
+                
+                doc.setFontSize(8);
+                doc.setTextColor(dimColor[0], dimColor[1], dimColor[2]);
+                doc.text(dimensionData[dim].name + (isYours ? ' (Your Strength)' : '') + ': ' + scores[dim] + '/50', 25, y);
+                y += 4;
+                doc.setFontSize(7);
+                doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+                var dimDescLines = doc.splitTextToSize(dimensionData[dim].description, 165);
+                doc.text(dimDescLines[0], 25, y);
+                y += 5;
+            }
+
+            y += 6;
+
+            // Reflection Questions
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
             doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
             doc.setFontSize(10);
             doc.setTextColor(255, 255, 255);
             doc.text('REFLECTION QUESTIONS', 105, y + 7, { align: 'center' });
-            y += 18;
+            y += 16;
 
-            const reflectionQs = [
-                'Think of a recent change. How did you respond initially?',
-                'What past experiences have shaped your response to change?',
-                'How does your change readiness affect your career opportunities?',
-                `What action could you take to build ${dimensionData[weakestDim].name}?`
+            var reflectionQs = [
+                "Think of a recent change. How did you respond initially?",
+                "What past experiences have shaped your response to change?",
+                "How does your change readiness affect your career opportunities?",
+                "What action could you take to build " + dimensionData[weakestDim].name + "?",
+                "Who could you learn from about navigating change more effectively?"
             ];
-            doc.setFontSize(9);
-            doc.setTextColor(...textDark);
-            reflectionQs.forEach((q, i) => {
-                if (y > 270) { doc.addPage(); y = 20; }
-                const lines = doc.splitTextToSize(`${i + 1}. ${q}`, 165);
-                lines.forEach(line => { doc.text(line, 25, y); y += 5; });
-                y += 4;
-            });
-
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8);
-                doc.setTextColor(...textMuted);
-                doc.text(`Page ${i} of ${pageCount}`, 105, 287, { align: 'center' });
-                doc.text('Chapman University • Argyros College of Business and Economics • MGMT 316', 105, 292, { align: 'center' });
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            for (var i = 0; i < reflectionQs.length; i++) {
+                if (y > 275) { doc.addPage(); y = 20; }
+                var qLines = doc.splitTextToSize((i + 1) + '. ' + reflectionQs[i], 165);
+                for (var j = 0; j < qLines.length; j++) {
+                    doc.text(qLines[j], 25, y);
+                    y += 4;
+                }
+                y += 2;
             }
 
-            doc.save(`Change_Readiness_Assessment_${studentName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+            // Footer on all pages
+            var pageCount = doc.internal.getNumberOfPages();
+            for (var i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+                doc.text('Page ' + i + ' of ' + pageCount, 105, 287, { align: 'center' });
+                doc.text('Chapman University - Argyros College of Business and Economics - MGMT 316', 105, 292, { align: 'center' });
+            }
+
+            doc.save('Change_Readiness_' + studentName.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.pdf');
         }
 
         function restartAssessment() {
