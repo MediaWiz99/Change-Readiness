@@ -996,6 +996,37 @@
                     <p class="readiness-desc">${profile.subtitle}</p>
                 </div>
 
+                <!-- TRACKER SUMMARY SECTION -->
+                <div style="background: linear-gradient(135deg, #1a3a7a 0%, #00205B 100%); color: white; padding: 25px; border-radius: 14px; margin: 20px 0;">
+                    <h3 style="color: #C4A000; margin-bottom: 15px; font-size: 1.3em;">📋 Assessment Tracker Summary</h3>
+                    <p style="font-size: 0.9em; opacity: 0.9; margin-bottom: 15px;">Copy this code into your Assessment Tracker.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Profile</div>
+                                <div style="font-size: 1.4em; font-weight: 700; color: #F5E6A3;">${profile.name}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Strongest Dimension</div>
+                                <div style="font-size: 1.4em; font-weight: 700; color: #F5E6A3;">${dimensionData[strongestDim].name}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Total Score</div>
+                                <div style="font-size: 1.2em; font-weight: 600;">${totalScore} / ${maxTotalScore} (${Math.round(scorePct)}%)</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Growth Area</div>
+                                <div style="font-size: 1.2em; font-weight: 600;">${dimensionData[weakestDim].name}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(196, 160, 0, 0.3); border-radius: 8px; font-family: monospace; font-size: 1.1em; text-align: center;">
+                        <span style="opacity: 0.7;">Tracker Code:</span> <strong style="color: #F5E6A3; font-size: 1.2em;">CRA-${strongestDim === 'cognitive' ? 'Co' : strongestDim === 'emotional' ? 'Em' : strongestDim === 'proactive' ? 'Pr' : 'Le'}-${profile.key === 'changeChampion' ? 'Ch' : profile.key === 'changeReady' ? 'Re' : profile.key === 'changeCapable' ? 'Ca' : 'Rs'}${totalScore}</strong>
+                    </div>
+                </div>
+
                 <div class="results-body">
                     <div class="dimension-scores">
                         ${Object.entries(scores).map(([dim, score]) => {
