@@ -1099,7 +1099,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
                                 <div style="font-size: 0.75em; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Total Score</div>
-                                <div style="font-size: 1.2em; font-weight: 700; color: #F5E6A3;">${totalScore} / ${maxTotal}</div>
+                                <div style="font-size: 1.2em; font-weight: 700; color: #F5E6A3;">${totalScore} / ${maxTotalScore}</div>
                             </div>
                             <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
                                 <div style="font-size: 0.75em; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Strongest Dimension</div>
@@ -1114,7 +1114,7 @@
                             <strong>Dimension Scores:</strong> Cognitive: ${scores.cognitive} | Emotional: ${scores.emotional} | Proactive: ${scores.proactive} | Learning: ${scores.learning}
                         </div>
                         <div style="font-size: 0.75em; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
-                            <div style="margin-bottom: 6px;"><strong>Your Result:</strong> Change Profile: ${profile.name} | Strongest: ${dimensionData[strongestDim].name} | Score: ${totalScore}/${maxTotal}</div>
+                            <div style="margin-bottom: 6px;"><strong>Your Result:</strong> Change Profile: ${profile.name} | Strongest: ${dimensionData[strongestDim].name} | Score: ${totalScore}/${maxTotalScore}</div>
                             <div style="opacity: 0.7;"><span>Tracker Code:</span> <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">CRA-${strongestDim === 'cognitive' ? 'Co' : strongestDim === 'emotional' ? 'Em' : strongestDim === 'proactive' ? 'Pr' : 'Le'}-${profile.key === 'changeChampion' ? 'Ch' : profile.key === 'changeReady' ? 'Re' : profile.key === 'changeCapable' ? 'Ca' : 'Rs'}${totalScore}</code></div>
                         </div>
                     </div>
